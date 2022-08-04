@@ -13,6 +13,7 @@ import {
   login,
   forgotPassword,
   resetpassword,
+  verifyEmail,
 } from "../controller/AuthController.js";
 import { signupService } from "../services/authService.js";
 
@@ -25,6 +26,7 @@ router.get("/", (req, res) => {
 
 router.post("/signup", signupValidation(), signup);
 router.post("/login", loginValidation(), login);
+router.post("/verifyEmail/:token", verifyEmail);
 router.post("/forgot-password", forgotPasswordValidation(), forgotPassword);
 router.post("/resetPassword", restPasswordValidation(), resetpassword);
 router.post("/verifyToken", verifyToken);

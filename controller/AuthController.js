@@ -1,7 +1,10 @@
 import { client } from "../index.js";
 import { getHashedPassword } from "../utility/hashing.js";
 import jwt from "jsonwebtoken";
-import { sendPasswordResetMail } from "../utility/mailer.js";
+import {
+  sendPasswordResetMail,
+  sendAccountVerificationMail,
+} from "../utility/mailer.js";
 import { ObjectId } from "mongodb";
 import Crypto from "crypto";
 import bcrypt from "bcrypt";
@@ -12,6 +15,10 @@ import {
   getToken,
   updatePassword,
   deleteToken,
+  verifyEmailToken,
+  activatateUser,
+  insertAccountConfirmationCode,
+  isUserActive,
 } from "../models/AuthModel.js";
 /**
  * POST /signup
@@ -19,24 +26,36 @@ import {
  */
 export const signup = async (req, res) => {
   console.log("signup requested", req.body);
-  const { username, password } = req.body;
+  const { firstName, lastName, username, password } = req.body;
   const dBUserByEmail = await getDBUserByEmail({ username: username });
   if (dBUserByEmail) {
-    return res.send({ message: "User Already Exists" });
+    return res.status(401).send({ message: "User Already Exists" });
   }
 
   let hashedPassword = await getHashedPassword(password);
   const registerResult = await registerUser({
+    firstName: firstName,
+    lastName: lastName,
     username: username,
     password: hashedPassword,
   });
 
-  var token = await jwt.sign(
+  var confirmationToken = await jwt.sign(
     { id: registerResult.insertedId.toString() },
     process.env.SECRET_KEY
   );
 
-  res.send({ message: "user registered successfully", token: token });
+  const isInserted = await insertAccountConfirmationCode(
+    { username: username },
+    confirmationToken
+  );
+  console.log("isInserted", isInserted);
+  sendAccountVerificationMail(username, confirmationToken, firstName);
+
+  res.status(200).send({
+    message: "User was registered successfully! Please Verify Your Email!",
+    success: true,
+  });
 };
 
 export const login = async (req, res) => {
@@ -46,6 +65,15 @@ export const login = async (req, res) => {
 
   if (!dBUserByEmail) {
     return res.send({ message: "Invalid Credentials" });
+  }
+
+  const isActive = dBUserByEmail.isActive;
+  console.log("isActive", dBUserByEmail.isActive);
+  if (!isActive) {
+    return res.status(401).send({
+      message: "Before login, Please verify your email",
+      success: false,
+    });
   }
 
   const isPasswordMathced = await bcrypt.compare(
@@ -133,6 +161,23 @@ export const resetpassword = async (req, res) => {
 
   res.send({
     message: "Password reset successfully",
+    success: true,
+  });
+};
+
+export const verifyEmail = async (req, res) => {
+  const { token } = req.body;
+  console.log("verify email token", token);
+  const isValidToken = await verifyEmailToken({ confirmationToken: token });
+
+  if (!isValidToken) {
+    return res.status(404).send({ message: "User Not found.", success: false });
+  }
+
+  const activateUser = await activatateUser(token);
+
+  res.send({
+    message: "email verified successfully",
     success: true,
   });
 };

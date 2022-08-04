@@ -4,6 +4,8 @@ import { getToken } from "../models/AuthModel.js";
 import { ObjectId } from "mongodb";
 export function signupValidation() {
   return [
+    check("firstName").notEmpty(),
+    check("lastName").notEmpty(),
     check("username", "Please provide a valid email as username").isEmail(),
     check("password", "Password length must be greater than 6 ").isLength({
       min: 6,
@@ -18,9 +20,9 @@ export function signupValidation() {
       // errors
       //   .array()
       //   .map((err) => extractedErrors.push({ [err.param]: err.msg }));
-
+      console.log(errors);
       return res.status(422).json({
-        errors: err.msg,
+        errors: errors.msg,
       });
     },
   ];
@@ -101,7 +103,7 @@ export function restPasswordValidation() {
         .array()
         .map((err) => extractedErrors.push({ [err.param]: err.msg }));
 
-      return res.status(422).json({
+      return res.status(401).json({
         errors: extractedErrors,
       });
     },
@@ -110,17 +112,47 @@ export function restPasswordValidation() {
 
 export const verifyToken = async (req, res) => {
   const { id, token } = req.query;
-  const isValidToken = await getToken({ _id: ObjectId(id), token: token });
-
-  if (!isValidToken) {
+  try {
+    const isValidToken = await getToken({ _id: ObjectId(id), token: token });
+    if (!isValidToken) {
+      return res.send({
+        message: "Invalid token..Please try resetting your password again!",
+        success: false,
+      });
+    } else {
+      return res.send({
+        message: "Valid token",
+        success: true,
+      });
+    }
+  } catch (error) {
     return res.send({
-      message: "Invalid token..Please try resetting your password again!",
+      message: "Something went wrong....Please try again later",
       success: false,
     });
-  } else {
+  }
+};
+
+export const verifyEmailValidation = async (req, res) => {
+  const { id, token } = req.query;
+  try {
+    const isValidToken = await getToken({ _id: ObjectId(id), token: token });
+
+    if (!isValidToken) {
+      return res.send({
+        message: "Invalid token..Please try resetting your password again!",
+        success: false,
+      });
+    } else {
+      return res.send({
+        message: "Valid token",
+        success: true,
+      });
+    }
+  } catch (error) {
     return res.send({
-      message: "Valid token",
-      success: true,
+      message: "Something went wrong....Please try again later",
+      success: false,
     });
   }
 };

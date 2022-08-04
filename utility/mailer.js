@@ -20,3 +20,31 @@ export async function sendPasswordResetMail(email, hashedResetToken, userId) {
 
   return await transporter.sendMail(mailOptions);
 }
+
+export async function sendAccountVerificationMail(
+  email,
+  confirmationCode,
+  name
+) {
+  const link = `${process.env.CLIENT_URL}/verifyEmail/${confirmationCode}`;
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    auth: {
+      user: process.env.SYSTEM_EMAIL_ID,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    to: email,
+    from: process.env.SYSTEM_EMAIL_ID,
+    subject: "Please confirm your account",
+    html: `<h1>Email Confirmation</h1>
+        <h2>Hello ${name}</h2>
+        <p>Thank you for registering. Please confirm your email by clicking on the following link</p>
+        <a href=${link}> Click here</a>
+        </div>`,
+  };
+
+  return await transporter.sendMail(mailOptions);
+}
