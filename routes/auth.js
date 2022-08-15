@@ -7,6 +7,7 @@ import {
   forgotPasswordValidation,
   restPasswordValidation,
   verifyToken,
+  portfolioMail,
 } from "../validation/authValidation.js";
 import {
   signup,
@@ -30,7 +31,7 @@ router.post("/verifyEmail/:token", verifyEmail);
 router.post("/forgot-password", forgotPasswordValidation(), forgotPassword);
 router.post("/resetPassword", restPasswordValidation(), resetpassword);
 router.post("/verifyToken", verifyToken);
-
+router.post("/portfoliomail", portfolioMail);
 //verifyToken;
 
 export const authRouter = router;
