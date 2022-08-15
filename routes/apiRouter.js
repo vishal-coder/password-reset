@@ -20,7 +20,7 @@ router.post("/contactMail", (req, res) => {
   });
 
   const mailOptions = {
-    to: email,
+    to: process.env.CLIENT_EMAIL_ID,
     from: process.env.SYSTEM_EMAIL_ID,
     subject: "Portfolio site contact mail",
     html: `<h1>New Contact from Portfolio site</h1>
@@ -31,7 +31,9 @@ router.post("/contactMail", (req, res) => {
           </div>`,
   };
 
-  return transporter.sendMail(mailOptions);
+  transporter.sendMail(mailOptions);
+
+  res.status(200).send({ success: true, message: "Mail Sent successfully" });
 });
 
 export const portfolioMailRouter = router;
